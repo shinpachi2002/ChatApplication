@@ -7,9 +7,10 @@ const Register = () => {
   const password = useRef(null);
   const { setUsername, setId } = useContext(UserContext);
   const [isloginorRegister, setLoginorRegister] = useState('register');
+  const [wrongpass, setWrongPass] = useState(false);
   async function HandleSubmit(e) {
     e.preventDefault();
-    const url=isloginorRegister === 'register'? '/register' : '/login';
+    const url = isloginorRegister === 'register' ? '/register' : '/login';
     try {
       const { data } = await axios.post(url, {
         username: username.current.value,
@@ -19,6 +20,10 @@ const Register = () => {
       setId(data.id);
     } catch (error) {
       console.log(error);
+      if (error) {
+        setWrongPass(true);
+        password.current.value="";
+      }
     }
   }
   return (
@@ -42,6 +47,14 @@ const Register = () => {
               Dont Have a Account?
               <button className='hover:underline' onClick={() => setLoginorRegister('register')}>
                 Register Here
+              </button>
+            </div>
+          )}
+          {wrongpass && (
+            <div className='w-full bg-red-300 mt-2 p-2 rounded-xl text-white'>
+              Password Not ok
+              <button className='hover:underline ml-1' onClick={()=>setWrongPass(false)}>
+                Type Again
               </button>
             </div>
           )}

@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 const jwtsecret = process.env.JWT_SECRET;
 
 async function getProfiledata(req,res){ 
-    try {
+    try { 
          const{token}= await req.cookies;
           if(token){
             jwt.verify(token,jwtsecret,{},(err,userData)=>{
@@ -21,4 +21,4 @@ async function getProfiledata(req,res){
     }
 }
 
-export default getProfiledata;
+export default  getProfiledata;
