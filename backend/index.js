@@ -1,23 +1,61 @@
-import express from "express"
+import express from "express";
 import dbconnect from './dbs.js';
-import {addUserInfo, getUserInfo} from "./controller/UserController.js";
+import { addUserInfo, getUserInfo } from "./controller/UserController.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import getProfiledata from "./controller/UserProfileController.js";
-const app=express();
+import { WebSocketServer } from "ws";
+import jwt from "jsonwebtoken";
+import 'dotenv/config.js';
+const jwtsecret = process.env.JWT_SECRET
+const app = express();
 app.use(cors({
-    credentials:true,
-    origin:"http://localhost:5173"
+    credentials: true,
+    origin: "http://localhost:5173"
 }));
-app.use(cookieParser())
-app.use(express.json())
-app.get("/test",(req,res)=>{
+app.use(cookieParser());
+app.use(express.json());
+
+app.get("/test", (req, res) => {
     res.send("hello");
-})
+});
+
 dbconnect();
-app.post("/register",addUserInfo);
-app.get("/profile",getProfiledata);
-app.post("/login",getUserInfo);
-app.listen(5000,()=>{
-    console.log("server is running")
+
+app.post("/register", addUserInfo);
+
+app.get("/profile", getProfiledata);
+
+app.post("/login", getUserInfo);
+
+// Create HTTP server instance
+const server = app.listen(5000, () => {
+    console.log("Express server is running on port 5000");
+});
+
+// Create WebSocket server using the same HTTP server instance
+const wss = new WebSocketServer({ server });
+
+// WebSocket connection handler
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if (cookies) {
+        const tokencookiestring = cookies.split(";").find(str => str.startsWith('token='))
+        if(tokencookiestring){
+            const token=tokencookiestring.split("=")[1];
+            if(token){
+                jwt.verify(token,jwtsecret,{},(err,userdata)=>{
+                    if(err) throw err
+                    const{userId,username}=userdata;
+                    connection.userId=userId;
+                    connection.username=username;
+                })
+            }
+        }
+    }
+    [...wss.clients].forEach(client=>{
+        client.send(JSON.stringify({
+            online:[...wss.clients].map(c=>({userId:c.userId,username:c.username}))
+        }))
+    })
 });

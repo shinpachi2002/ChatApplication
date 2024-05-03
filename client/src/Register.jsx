@@ -22,7 +22,7 @@ const Register = () => {
       console.log(error);
       if (error) {
         setWrongPass(true);
-        password.current.value="";
+        password.current.value="";  
       }
     }
   }

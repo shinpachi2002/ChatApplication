@@ -5,7 +5,6 @@ import cookieParser from 'cookie-parser';
 import bcrypt from "bcrypt";
 const jwtsecret = process.env.JWT_SECRET
 const salt = bcrypt.genSaltSync(10);
-
 async function addUserInfo(req, res) {
     const { username, password } = req.body;
     const hashedpassword = bcrypt.hashSync(password, salt);
