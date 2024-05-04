@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import dbconnect from './dbs.js';
 import { addUserInfo, getUserInfo } from "./controller/UserController.js";
 import cors from "cors";
@@ -51,8 +51,16 @@ wss.on('connection', (connection, req) => {
                     connection.username=username;
                 })
             }
-        }
+        }   
     }
+    connection.on("message",(message)=>{
+       const messageData=JSON.parse(message.toString());
+        const{recipient,text}=messageData;
+        if(recipient && text){
+            [...wss.clients].filter(c=>c.userId === recipient).forEach(c=>c.send(JSON.stringify({text})));
+        }
+     });
+    //this function collects the data from the cookie and stores the username and userid in it and send to the other clients connected to the web socket
     [...wss.clients].forEach(client=>{
         client.send(JSON.stringify({
             online:[...wss.clients].map(c=>({userId:c.userId,username:c.username}))

@@ -32,7 +32,7 @@ const Register = () => {
       <form action="" className='w-64 mx-auto mb-12' onSubmit={HandleSubmit}>
         <input type="text" name="" id="" placeholder='username' className='w-full mt-2 p-2 rounded-xl ' ref={username} />
         <input type="password" name="" id="" placeholder='password' className='w-full mt-2 p-2 rounded-xl' ref={password} />
-        <button className='w-full bg-purple-100 mt-2 p-2 rounded-xl'>{isloginorRegister === 'register' ? "Register" : "Login"}</button>
+        <button className='w-full bg-purple-500 mt-2 p-2 rounded-xl'>{isloginorRegister === 'register' ? "Register" : "Login"}</button>
         <div className='text-center mt-2'>
           {isloginorRegister === 'register' && (
             <div>
