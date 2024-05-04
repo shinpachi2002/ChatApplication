@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Avatar from "./Avatar";
+import { UserContext } from "./UserContext";
 
 const Chat = () => {
   const [ws, setWs] = useState("");
   const [onlinepeople, setOnlinePeople] = useState([]);
+  const [selectedContact, setSelectedContact] = useState("");
+  const { username, id } = useContext(UserContext);
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:5000");
     setWs(ws);
     ws.addEventListener("message", handlemessage);
   }, []);
+
   function showpeopleOnline(peopleArray) {
     const people = {};
     peopleArray.forEach(({ userId, username }) => {
@@ -23,6 +27,8 @@ const Chat = () => {
     }
     // e.data.text().then(messageString=>console.log(messageString))
   }
+  const excludingcurrentuser = { ...onlinepeople };
+  delete excludingcurrentuser[id];
   return (
     <div className="h-screen flex">
       <div className="w-1/5 bg-primary pl-4 pt-4">
@@ -39,16 +45,30 @@ const Chat = () => {
           Chat Me!
         </div>
         <div className="flex flex-col gap-2 max-w-64 md:mr-4 sm:mr-4 mr-4">
-          {Object.keys(onlinepeople).map((userId) => (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-purple-100">
+          {Object.keys(excludingcurrentuser).map((userId) => (
+            <div
+              key={userId}
+              onClick={() => setSelectedContact(userId)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md  cursor-pointer ${
+                userId === selectedContact ? "bg-green-300" : "bg-purple-100 "
+              }`}
+            >
               <Avatar userId={userId} username={onlinepeople[userId]}></Avatar>
-              {onlinepeople[userId]}
+              <span className="text-gray-800">{onlinepeople[userId]}</span>
             </div>
           ))}
         </div>
       </div>
       <div className="w-4/5 bg-secondary p-2 flex flex-col">
-        <div className="flex-grow">Message with selected Person</div>
+        <div className="flex-grow">
+          {!selectedContact && (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-3xl text-gray-500">
+                Please Select a Contact to Start Conversation
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2 ">
           <input
             type="text"
