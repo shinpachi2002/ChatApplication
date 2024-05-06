@@ -7,12 +7,12 @@ const Chat = () => {
   const [onlinepeople, setOnlinePeople] = useState([]);
   const [newMessageText, setNewMessageText] = useState("");
   const [selectedContact, setSelectedContact] = useState("");
-  const [messages,setMessages]=useState([]);
+  const [messages, setMessages] = useState([]);
   const { username, id } = useContext(UserContext);
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:5000");
-    setWs(ws);
     ws.addEventListener("message", handlemessage);
+    console.log(ws);
   }, []);
 
   function showpeopleOnline(peopleArray) {
@@ -26,20 +26,21 @@ const Chat = () => {
     const messageData = JSON.parse(e.data);
     if ("online" in messageData) {
       showpeopleOnline(messageData.online);
-    }
-    else {
+    } else {
       console.log(messageData);
     }
     // e.data.text().then(messageString=>console.log(messageString))
   }
   function sendMessage(ev) {
     ev.preventDefault();
-    ws.send(JSON.stringify({
-      recipient: selectedContact,
-      text: newMessageText
-    }))
+    ws.send(
+      JSON.stringify({
+        recipient: selectedContact,
+        text: newMessageText,
+      })
+    );
     setNewMessageText("");
-    setMessages((prev =>([...prev,{text:newMessageText,isOur:true}])))// doen till 2:46
+    setMessages((prev) => [...prev, { text: newMessageText, isOur: true }]); // doen till 2:46
   }
   const excludingcurrentuser = { ...onlinepeople };
   delete excludingcurrentuser[id];
@@ -63,8 +64,9 @@ const Chat = () => {
             <div
               key={userId}
               onClick={() => setSelectedContact(userId)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md  cursor-pointer ${userId === selectedContact ? "bg-green-300" : "bg-purple-100 "
-                }`}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md  cursor-pointer ${
+                userId === selectedContact ? "bg-green-300" : "bg-purple-100 "
+              }`}
             >
               <Avatar userId={userId} username={onlinepeople[userId]}></Avatar>
               <span className="text-gray-800">{onlinepeople[userId]}</span>
@@ -91,7 +93,10 @@ const Chat = () => {
               placeholder="Type Your Message Here"
               className="p-2 bg-white border rounded-md flex-grow"
             />
-            <button type="submit" className="bg-blue-500 p-2 text-white rounded-md">
+            <button
+              type="submit"
+              className="bg-blue-500 p-2 text-white rounded-md"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"

@@ -1,23 +1,25 @@
 import express, { json } from "express";
-import dbconnect from './dbs.js';
+import dbconnect from "./dbs.js";
 import { addUserInfo, getUserInfo } from "./controller/UserController.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import getProfiledata from "./controller/UserProfileController.js";
 import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
-import 'dotenv/config.js';
-const jwtsecret = process.env.JWT_SECRET
+import "dotenv/config.js";
+const jwtsecret = process.env.JWT_SECRET;
 const app = express();
-app.use(cors({
+app.use(
+  cors({
     credentials: true,
-    origin: "http://localhost:5173"
-}));
+    origin: "http://localhost:5173",
+  })
+);
 app.use(cookieParser());
 app.use(express.json());
 
 app.get("/test", (req, res) => {
-    res.send("hello");
+  res.send("hello");
 });
 
 dbconnect();
@@ -30,40 +32,54 @@ app.post("/login", getUserInfo);
 
 // Create HTTP server instance
 const server = app.listen(5000, () => {
-    console.log("Express server is running on port 5000");
+  console.log("Express server is running on port 5000");
 });
 
 // Create WebSocket server using the same HTTP server instance
 const wss = new WebSocketServer({ server });
 
 // WebSocket connection handler
-wss.on('connection', (connection, req) => {
-    const cookies = req.headers.cookie;
-    if (cookies) {
-        const tokencookiestring = cookies.split(";").find(str => str.startsWith('token='))
-        if(tokencookiestring){
-            const token=tokencookiestring.split("=")[1];
-            if(token){
-                jwt.verify(token,jwtsecret,{},(err,userdata)=>{
-                    if(err) throw err
-                    const{userId,username}=userdata;
-                    connection.userId=userId;
-                    connection.username=username;
-                })
-            }
-        }   
+wss.on("connection", (connection, req) => {
+  const cookies = req.headers.cookie;
+  if (cookies) {
+    const tokencookiestring = cookies.split(";");
+    console.log(tokencookiestring);
+    const tokencookiestring2 = tokencookiestring.find((str) =>
+      str.trim().startsWith("token=")
+    );
+    console.log(tokencookiestring2);
+    if (tokencookiestring2) {
+      const token = tokencookiestring2.split("=")[1];
+      console.log(token);
+      if (token) {
+        jwt.verify(token, jwtsecret, {}, (err, userdata) => {
+          if (err) throw err;
+          const { userId, username } = userdata;
+          connection.userId = userId;
+          connection.username = username;
+          console.log(username, userId);
+        });
+      }
     }
-    connection.on("message",(message)=>{
-       const messageData=JSON.parse(message.toString());
-        const{recipient,text}=messageData;
-        if(recipient && text){
-            [...wss.clients].filter(c=>c.userId === recipient).forEach(c=>c.send(JSON.stringify({text})));
-        }
-     });
-    //this function collects the data from the cookie and stores the username and userid in it and send to the other clients connected to the web socket
-    [...wss.clients].forEach(client=>{
-        client.send(JSON.stringify({
-            online:[...wss.clients].map(c=>({userId:c.userId,username:c.username}))
-        }))
-    })
+  }
+  connection.on("message", (message) => {
+    const messageData = JSON.parse(message.toString());
+    const { recipient, text } = messageData;
+    if (recipient && text) {
+      [...wss.clients]
+        .filter((c) => c.userId === recipient)
+        .forEach((c) => c.send(JSON.stringify({ text })));
+    }
+  });
+  //this function collects the data from the cookie and stores the username and userid in it and send to the other clients connected to the web socket
+  [...wss.clients].forEach((client) => {
+    client.send(
+      JSON.stringify({
+        online: [...wss.clients].map((c) => ({
+          userId: c.userId,
+          username: c.username,
+        })),
+      })
+    );
+  });
 });

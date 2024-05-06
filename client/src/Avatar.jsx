@@ -12,11 +12,12 @@ const Avatar = ({ userId, username }) => {
   const userIdbase10 = parseInt(userId, 16);
   const colorIndex = userIdbase10 % colors.length;
   const color = colors[colorIndex];
+  console.log(username);
   return (
     <div
       className={`w-8 h-8 rounded-full flex items-center text-center ${color}`}
     >
-      <div className="text-center w-full">{username[0]}</div>
+      <div className="text-center w-full">{username?.[0]}</div>
     </div>
   );
 };
