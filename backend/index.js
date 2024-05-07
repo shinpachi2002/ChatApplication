@@ -7,6 +7,7 @@ import getProfiledata from "./controller/UserProfileController.js";
 import { WebSocketServer } from "ws";
 import jwt from "jsonwebtoken";
 import "dotenv/config.js";
+import MessageModel from "./models/Message.js";
 const jwtsecret = process.env.JWT_SECRET;
 const app = express();
 app.use(
@@ -62,13 +63,24 @@ wss.on("connection", (connection, req) => {
       }
     }
   }
-  connection.on("message", (message) => {
+  connection.on("message", async (message) => {
     const messageData = JSON.parse(message.toString());
     const { recipient, text } = messageData;
     if (recipient && text) {
-      [...wss.clients]
-        .filter((c) => c.userId === recipient)
-        .forEach((c) => c.send(JSON.stringify({ text })));
+      try {
+        const messagedoc = await MessageModel.create({
+          sender: connection.userId,
+          recipient,
+          text,
+        });
+        [...wss.clients]
+          .filter((c) => c.userId === recipient)
+          .forEach((c) =>
+            c.send(JSON.stringify({ text, sender: connection.userId,id:messagedoc._id,recipient:recipient }))
+          );
+      } catch (error) {
+        console.log(error);
+      }
     }
   });
   //this function collects the data from the cookie and stores the username and userid in it and send to the other clients connected to the web socket

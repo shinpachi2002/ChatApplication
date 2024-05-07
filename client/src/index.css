@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.chat-messages-container {
+    background-image: url('./assets/360_F_327515607_Hcps04aaEc7Ki43d1XZPxwcv0ZaIaorh.jpg');
+    background-size: cover;
+    background-position: center;
+  }

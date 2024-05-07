@@ -1,6 +1,7 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import { UserContext } from "./UserContext";
+import { uniqBy } from "lodash";
 
 const Chat = () => {
   const [ws, setWs] = useState("");
@@ -9,10 +10,11 @@ const Chat = () => {
   const [selectedContact, setSelectedContact] = useState("");
   const [messages, setMessages] = useState([]);
   const { username, id } = useContext(UserContext);
+  const divUnderMessages=useRef();
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:5000");
     ws.addEventListener("message", handlemessage);
-    console.log(ws);
+    setWs(ws);
   }, []);
 
   function showpeopleOnline(peopleArray) {
@@ -24,10 +26,11 @@ const Chat = () => {
   }
   function handlemessage(e) {
     const messageData = JSON.parse(e.data);
+    console.log({ e, messageData });
     if ("online" in messageData) {
       showpeopleOnline(messageData.online);
-    } else {
-      console.log(messageData);
+    } else if ("text" in messageData) {
+      setMessages((prev) => [...prev, { ...messageData }]);
     }
     // e.data.text().then(messageString=>console.log(messageString))
   }
@@ -40,10 +43,30 @@ const Chat = () => {
       })
     );
     setNewMessageText("");
-    setMessages((prev) => [...prev, { text: newMessageText, isOur: true }]); // doen till 2:46
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: newMessageText,
+        isOur: true,
+        sender: id,
+        recipient: selectedContact,
+        id: Date.now(),
+      },
+    ]); // doen till 2:46
   }
+  
+  useEffect(()=>{
+    const div=divUnderMessages.current;
+    if(div){
+      div.scrollIntoView({behavior:'smooth',block:'end'});
+    }
+  },[messages])
+
   const excludingcurrentuser = { ...onlinepeople };
   delete excludingcurrentuser[id];
+
+  const messageswithoutduplicates = uniqBy(messages, "id");
+
   return (
     <div className="h-screen flex">
       <div className="w-1/5 bg-primary pl-4 pt-4">
@@ -74,12 +97,41 @@ const Chat = () => {
           ))}
         </div>
       </div>
-      <div className="w-4/5 bg-secondary p-2 flex flex-col">
+      <div className="w-4/5  p-2 flex flex-col chat-messages-container">
         <div className="flex-grow">
           {!selectedContact && (
             <div className="h-full flex items-center justify-center">
               <div className="text-3xl text-gray-500">
                 &larr; Please Select a Contact to Start Conversation
+              </div>
+            </div>
+          )}
+          {!!selectedContact && (
+            <div className="relative h-full">
+              <div className="overflow-y-scroll absolute  top-0 left-0 right-0 bottom-2 ">
+                {messageswithoutduplicates.map((messages) => (
+                  <div
+                    className={
+                      "" + (messages.sender === id ? "text-right" : "text-left")
+                    }
+                  >
+                    <div
+                      className={
+                        "" +
+                        (messages.sender === id
+                          ? "bg-primary text-white p-2 my-2 rounded-md text-sm inline-block text-left"
+                          : "bg-third text-white p-2 my-2 rounded-md text-sm inline-block ms-auto")
+                      }
+                    >
+                      sender:{messages.sender}
+                      <br></br>
+                      id:{id}
+                      <br></br>
+                      {messages.text}
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-4" ref={divUnderMessages}></div>
               </div>
             </div>
           )}
