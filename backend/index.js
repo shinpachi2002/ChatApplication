@@ -31,6 +31,28 @@ app.get("/profile", getProfiledata);
 
 app.post("/login", getUserInfo);
 
+
+app.get("/messages/:userId",async(req,res)=>{
+  const {userId}=req.params;
+ try {
+  const {token}= await req.cookies;
+  jwt.verify(token,jwtsecret,{},async(err,userData)=>{
+    if(err)throw err;
+    const OurUserId=userData.userId;
+    const messages=await MessageModel.find({
+      sender:{$in:[userId,OurUserId]},
+      recipient:{$in:[userId,OurUserId]}
+    }).sort({createdAt:1});
+    console.log(messages);
+    res.json(messages);
+  })
+ } catch (error) {
+  console.log("no token");
+ }
+ 
+})
+
+
 // Create HTTP server instance
 const server = app.listen(5000, () => {
   console.log("Express server is running on port 5000");
@@ -44,21 +66,17 @@ wss.on("connection", (connection, req) => {
   const cookies = req.headers.cookie;
   if (cookies) {
     const tokencookiestring = cookies.split(";");
-    console.log(tokencookiestring);
     const tokencookiestring2 = tokencookiestring.find((str) =>
       str.trim().startsWith("token=")
     );
-    console.log(tokencookiestring2);
     if (tokencookiestring2) {
       const token = tokencookiestring2.split("=")[1];
-      console.log(token);
       if (token) {
         jwt.verify(token, jwtsecret, {}, (err, userdata) => {
           if (err) throw err;
           const { userId, username } = userdata;
           connection.userId = userId;
           connection.username = username;
-          console.log(username, userId);
         });
       }
     }

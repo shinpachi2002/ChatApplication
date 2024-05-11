@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
 import { UserContext } from "./UserContext";
 import { uniqBy } from "lodash";
+import axios from "axios";
 
 const Chat = () => {
   const [ws, setWs] = useState("");
@@ -12,10 +13,20 @@ const Chat = () => {
   const { username, id } = useContext(UserContext);
   const divUnderMessages=useRef();
   useEffect(() => {
+     connecttows();
+  }, []);
+
+  function connecttows(){
     const ws = new WebSocket("ws://localhost:5000");
     ws.addEventListener("message", handlemessage);
+    ws.addEventListener("close",()=>{
+      setTimeout(() => { 
+        console.log("recoonecting to websocket"); 
+        connecttows();
+      }, 1000);
+    })
     setWs(ws);
-  }, []);
+  }
 
   function showpeopleOnline(peopleArray) {
     const people = {};
@@ -26,7 +37,7 @@ const Chat = () => {
   }
   function handlemessage(e) {
     const messageData = JSON.parse(e.data);
-    console.log({ e, messageData });
+    //console.log({ e, messageData });
     if ("online" in messageData) {
       showpeopleOnline(messageData.online);
     } else if ("text" in messageData) {
@@ -62,10 +73,19 @@ const Chat = () => {
     }
   },[messages])
 
+  useEffect(()=>{
+   if(selectedContact){
+    axios.get("/messages/"+selectedContact).then((res)=>{
+     const {data}=res;
+    setMessages(res.data);
+    })
+   }
+  },[selectedContact])
+
   const excludingcurrentuser = { ...onlinepeople };
   delete excludingcurrentuser[id];
 
-  const messageswithoutduplicates = uniqBy(messages, "id");
+  const messageswithoutduplicates = uniqBy(messages, "_id");
 
   return (
     <div className="h-screen flex">
