@@ -1,6 +1,6 @@
 import React from "react";
 
-const Avatar = ({ userId, username }) => {
+const Avatar = ({ userId, username,online }) => {
   const colors = [
     "bg-red-200",
     "bg-green-200",
@@ -14,9 +14,19 @@ const Avatar = ({ userId, username }) => {
   const color = colors[colorIndex];
   return (
     <div
-      className={`w-8 h-8 rounded-full flex items-center text-center ${color}`}
-    >
-      <div className="text-center w-full">{username?.[0]}</div>
+      className={`w-8 h-8 relative rounded-full flex items-center text-center ${color}`}
+    > 
+      <div className="text-center w-full opacity-70">{username?.[0]}</div>
+      {
+        online && (
+          <div className="absolute w-3 h-3 bg-green-400 bottom-0 left-6 rounded-full border border-white"></div>
+        )
+      }
+      {
+        !online &&(
+          <div className="absolute w-3 h-3 bg-gray-400 bottom-0 left-6 rounded-full border border-white"></div>
+        )
+      }
     </div>
   );
 };
